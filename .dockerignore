@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.env
+
+# Development
+.vscode/
+*.log
+logs/
+tests/
+*.md
+
+# Model files (these should be mounted as volumes)
+models/*.keras
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
