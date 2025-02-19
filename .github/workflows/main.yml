@@ -79,6 +79,32 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          cd /path/to/deployment
-          docker-compose pull
-          docker-compose up -d
+          # First, let's create our deployment directory if it doesn't exist
+          mkdir -p ~/deepfake-detection
+          cd ~/deepfake-detection
+
+          # Install Docker if not present
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+          fi
+
+          # Install Docker Compose if not present
+          if ! command -v docker compose &> /dev/null; then
+            echo "Installing Docker Compose..."
+            sudo apt-get update
+            sudo apt-get install -y docker-compose-plugin
+          fi
+
+          # Make sure current user can run docker commands
+          sudo usermod -aG docker $USER
+
+          # Pull and deploy the application
+          echo "Deploying application..."
+          docker compose pull
+          docker compose up -d
+
+          # Verify deployment
+          echo "Checking deployment status..."
+          docker compose ps
