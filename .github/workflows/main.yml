@@ -79,32 +79,56 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
-          # First, let's create our deployment directory if it doesn't exist
+          echo "Creating deployment directory..."
           mkdir -p ~/deepfake-detection
           cd ~/deepfake-detection
 
-          # Install Docker if not present
-          if ! command -v docker &> /dev/null; then
-            echo "Installing Docker..."
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sudo sh get-docker.sh
-          fi
+          echo "Creating Docker Compose configuration..."
+          cat > docker-compose.yml << 'EOL'
+          version: '3.8'
+          
+          services:
+            api:
+              image: kks24/deepfake-detection-backend:latest
+              ports:
+                - "5000:5000"
+              volumes:
+                - ./models:/app/models
+                - ./logs:/app/logs
+              environment:
+                - FLASK_APP=app/__init__.py
+                - FLASK_ENV=production
+                - MODEL_PATH=models/facenet_real_fake_classifier_final.keras
+              restart: unless-stopped
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/detect/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+          EOL
 
-          # Install Docker Compose if not present
+          echo "Creating model directory..."
+          mkdir -p models
+          mkdir -p logs
+
+          echo "Verifying Docker Compose installation..."
           if ! command -v docker compose &> /dev/null; then
             echo "Installing Docker Compose..."
             sudo apt-get update
             sudo apt-get install -y docker-compose-plugin
           fi
 
-          # Make sure current user can run docker commands
-          sudo usermod -aG docker $USER
-
-          # Pull and deploy the application
-          echo "Deploying application..."
+          echo "Pulling latest image..."
           docker compose pull
+
+          echo "Starting services..."
           docker compose up -d
 
-          # Verify deployment
-          echo "Checking deployment status..."
+          echo "Waiting for service to start..."
+          sleep 10
+
+          echo "Checking service status..."
           docker compose ps
+
+          echo "Checking container logs..."
+          docker compose logs
