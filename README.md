@@ -64,7 +64,7 @@ pip install -r requirements.txt
 ```bash
 export FLASK_APP=app/__init__.py
 export FLASK_ENV=development
-export MODEL_PATH=models/facenet_real_fake_classifier_2Stage_2.h5
+export MODEL_PATH=models/facenet_real_fake_classifier_final.keras
 ```
 
 5. Run the development server:
