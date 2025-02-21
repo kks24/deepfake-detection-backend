@@ -18,10 +18,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
 COPY app app/
+COPY models models/
 COPY wsgi.py .
 
 # Create necessary directories
-RUN mkdir -p logs models
+RUN mkdir -p logs
 
 # Set environment variables
 ENV FLASK_APP=app/__init__.py
