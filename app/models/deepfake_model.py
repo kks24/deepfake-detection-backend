@@ -64,7 +64,7 @@ class DeepfakeDetector:
                 
                 # Load model with custom objects
                 self._model = load_model(
-                    "models/facenet_real_fake_classifier_final.keras",
+                    "./models/facenet_real_fake_classifier_final.keras",
                     custom_objects=custom_objects
                 )
                 
