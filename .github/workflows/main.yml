@@ -38,6 +38,18 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2  # Add this to get access to your repository files
+    
+    - name: Copy model files to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "models/*"
+        target: "~/deepfake-detection/"
+        strip_components: 0
+
     - name: Deploy to server
       uses: appleboy/ssh-action@master
       with:
@@ -63,12 +75,12 @@ jobs:
               environment:
                 - FLASK_APP=app/__init__.py
                 - FLASK_ENV=production
-                - MODEL_PATH=./app/models/facenet_real_fake_classifier_final.keras
+                - MODEL_PATH=models/facenet_real_fake_classifier_final.keras
               restart: unless-stopped
           EOL
 
-          echo "Creating required directories..."
-          mkdir -p models logs
+          echo "Creating logs directory..."
+          mkdir -p logs
 
           echo "Pulling and starting services..."
           docker compose pull
