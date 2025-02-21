@@ -63,7 +63,7 @@ jobs:
               environment:
                 - FLASK_APP=app/__init__.py
                 - FLASK_ENV=production
-                - MODEL_PATH=app/models/facenet_real_fake_classifier_final.keras
+                - MODEL_PATH=./app/models/facenet_real_fake_classifier_final.keras
               restart: unless-stopped
           EOL
 
