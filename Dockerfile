@@ -26,7 +26,7 @@ RUN mkdir -p logs
 # Set environment variables
 ENV FLASK_APP=app/__init__.py
 ENV FLASK_ENV=production
-ENV MODEL_PATH=facenet_real_fake_classifier_final.keras
+ENV MODEL_PATH=/app/models/facenet_real_fake_classifier_final.keras
 
 # Expose the port
 EXPOSE 5000

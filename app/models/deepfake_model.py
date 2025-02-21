@@ -62,36 +62,20 @@ class DeepfakeDetector:
                     "l2_normalize": l2_normalize
                 }
                 
-                # Load model with custom objects
+                # Get model path from environment or default
                 model_path = os.getenv('MODEL_PATH', 'models/facenet_real_fake_classifier_final.keras')
-            
-                # Debug logging
-                self.logger.info(f"Current working directory: {os.getcwd()}")
-                self.logger.info(f"Model path from env: {model_path}")
-                self.logger.info(f"Absolute model path: {os.path.abspath(model_path)}")
-                self.logger.info(f"Directory contents: {os.listdir('.')}")
-                if os.path.exists('models'):
-                    self.logger.info(f"Models directory contents: {os.listdir('models')}")
                 
-                # Try different path combinations
-                possible_paths = [
-                    model_path,
-                    os.path.join(os.getcwd(), model_path),
-                    os.path.join('/app', model_path),
-                    '/app/models/facenet_real_fake_classifier_final.keras'
-                ]
-
-                found_path = None
-                for path in possible_paths:
-                    if os.path.exists(path):
-                        found_path = path
-                        self.logger.info(f"Found model at: {path}")
-                        break
-                    else:
-                        self.logger.info(f"Tried path but not found: {path}")
-
-                if not found_path:
-                    raise FileNotFoundError(f"Model file not found. Tried paths: {possible_paths}")
+                # Convert to absolute path if it's relative
+                if not os.path.isabs(model_path):
+                    model_path = os.path.join(os.getcwd(), model_path.lstrip('./'))
+                
+                self.logger.info(f"Current working directory: {os.getcwd()}")
+                self.logger.info(f"Using absolute model path: {model_path}")
+                
+                if os.path.exists(model_path):
+                    self.logger.info(f"Found model at: {model_path}")
+                else:
+                    raise FileNotFoundError(f"Model not found at: {model_path}")
             
                 self._model = load_model(
                     model_path,
