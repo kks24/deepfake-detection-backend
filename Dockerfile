@@ -16,10 +16,8 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY app app/
-COPY models models/
-COPY wsgi.py .
+# Copy everything from the current directory to /app
+COPY . .
 
 # Create necessary directories
 RUN mkdir -p logs
