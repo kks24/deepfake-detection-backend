@@ -63,7 +63,36 @@ class DeepfakeDetector:
                 }
                 
                 # Load model with custom objects
-                model_path = os.getenv('MODEL_PATH', 'facenet_real_fake_classifier_final.keras')
+                model_path = os.getenv('MODEL_PATH', 'models/facenet_real_fake_classifier_final.keras')
+            
+                # Debug logging
+                self.logger.info(f"Current working directory: {os.getcwd()}")
+                self.logger.info(f"Model path from env: {model_path}")
+                self.logger.info(f"Absolute model path: {os.path.abspath(model_path)}")
+                self.logger.info(f"Directory contents: {os.listdir('.')}")
+                if os.path.exists('models'):
+                    self.logger.info(f"Models directory contents: {os.listdir('models')}")
+                
+                # Try different path combinations
+                possible_paths = [
+                    model_path,
+                    os.path.join(os.getcwd(), model_path),
+                    os.path.join('/app', model_path),
+                    '/app/models/facenet_real_fake_classifier_final.keras'
+                ]
+
+                found_path = None
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        found_path = path
+                        self.logger.info(f"Found model at: {path}")
+                        break
+                    else:
+                        self.logger.info(f"Tried path but not found: {path}")
+
+                if not found_path:
+                    raise FileNotFoundError(f"Model file not found. Tried paths: {possible_paths}")
+            
                 self._model = load_model(
                     model_path,
                     custom_objects=custom_objects
