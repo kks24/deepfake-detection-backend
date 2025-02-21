@@ -11,7 +11,7 @@ services:
     environment:
       - FLASK_APP=app/__init__.py
       - FLASK_ENV=development
-      - MODEL_PATH=models/facenet_real_fake_classifier_final.keras
+      - MODEL_PATH=facenet_real_fake_classifier_final.keras
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/detect/health"]
       interval: 30s

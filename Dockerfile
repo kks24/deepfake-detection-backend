@@ -16,8 +16,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy everything from the current directory to /app
-COPY . .
+# Copy the application code
+COPY app app/
+COPY wsgi.py .
 
 # Create necessary directories
 RUN mkdir -p logs
@@ -25,7 +26,7 @@ RUN mkdir -p logs
 # Set environment variables
 ENV FLASK_APP=app/__init__.py
 ENV FLASK_ENV=production
-ENV MODEL_PATH=models/facenet_real_fake_classifier_final.keras
+ENV MODEL_PATH=facenet_real_fake_classifier_final.keras
 
 # Expose the port
 EXPOSE 5000

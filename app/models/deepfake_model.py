@@ -63,7 +63,7 @@ class DeepfakeDetector:
                 }
                 
                 # Load model with custom objects
-                model_path = os.getenv('MODEL_PATH', 'models/facenet_real_fake_classifier_final.keras')
+                model_path = os.getenv('MODEL_PATH', 'facenet_real_fake_classifier_final.keras')
                 self._model = load_model(
                     model_path,
                     custom_objects=custom_objects
