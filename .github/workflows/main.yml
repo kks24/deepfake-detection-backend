@@ -75,7 +75,12 @@ jobs:
               environment:
                 - FLASK_APP=app/__init__.py
                 - FLASK_ENV=production
-                - MODEL_PATH=/app/models/facenet_real_fake_classifier_final.keras
+                - MODEL_PATH=models/facenet_real_fake_classifier_final.keras
+                - R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
+                - R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+                - R2_ENDPOINT_URL=${{ secrets.R2_ENDPOINT_URL }}
+                - R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}
+                - R2_MODEL_KEY=${{ secrets.R2_MODEL_KEY }}
               working_dir: /app
               restart: unless-stopped
           EOL

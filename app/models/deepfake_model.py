@@ -10,6 +10,7 @@ import gc
 from tensorflow.keras.models import load_model 
 from tensorflow.keras.preprocessing import image
 import keras
+from app.utils.r2_storage import R2ModelStorage
 
 class DeepfakeDetector:
     _instance = None
@@ -32,6 +33,15 @@ class DeepfakeDetector:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         self.configure_tensorflow()
+
+        # Download model on initialization
+        self.r2_storage = R2ModelStorage()
+        self.ensure_model_downloaded()
+    
+    def ensure_model_downloaded(self):
+        """Ensure model is downloaded from R2"""
+        if not os.path.exists('models/facenet_real_fake_classifier_final.keras'):
+            self.r2_storage.download_model()
     
     def configure_tensorflow(self):
         try:
@@ -43,6 +53,8 @@ class DeepfakeDetector:
     def load_model(self):
         if self._model is None:
             try:
+                self.ensure_model_downloaded()
+
                 # Clear any existing sessions
                 tf.keras.backend.clear_session()
                 gc.collect()
@@ -62,27 +74,8 @@ class DeepfakeDetector:
                     "l2_normalize": l2_normalize
                 }
                 
-                model_path = os.path.join('/app', 'models', 'facenet_real_fake_classifier_final.keras')
-            
-                # Debug file details
-                self.logger.info(f"Current working directory: {os.getcwd()}")
-                self.logger.info(f"Using model path: {model_path}")
-                
-                # Check file details
-                if os.path.exists(model_path):
-                    file_stat = os.stat(model_path)
-                    self.logger.info(f"File exists with size: {file_stat.st_size} bytes")
-                    self.logger.info(f"File permissions: {oct(file_stat.st_mode)}")
-                    
-                    # Try to read first few bytes to verify file is accessible
-                    with open(model_path, 'rb') as f:
-                        header = f.read(16)
-                        self.logger.info(f"File header (hex): {header.hex()}")
-                else:
-                    raise FileNotFoundError(f"Model not found at: {model_path}")
-            
                 self._model = load_model(
-                    model_path,
+                    'models/facenet_real_fake_classifier_final.keras',
                     custom_objects=custom_objects
                 )
                 
