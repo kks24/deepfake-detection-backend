@@ -73,9 +73,30 @@ class DeepfakeDetector:
                     "scaling": scaling, 
                     "l2_normalize": l2_normalize
                 }
+
+                model_path = os.path.join('/app', 'models', 'facenet_real_fake_classifier_final.keras')
+            
+                # Debug file details
+                self.logger.info(f"Current working directory: {os.getcwd()}")
+                self.logger.info(f"Using absolute model path: {model_path}")
+                self.logger.info(f"Using model path: {model_path}")
+                
+                # Check file details
+                if os.path.exists(model_path):
+                    self.logger.info(f"Found model at: {model_path}")
+                    file_stat = os.stat(model_path)
+                    self.logger.info(f"File exists with size: {file_stat.st_size} bytes")
+                    self.logger.info(f"File permissions: {oct(file_stat.st_mode)}")
+                    
+                    # Try to read first few bytes to verify file is accessible
+                    with open(model_path, 'rb') as f:
+                        header = f.read(16)
+                        self.logger.info(f"File header (hex): {header.hex()}")
+                else:
+                    raise FileNotFoundError(f"Model not found at: {model_path}")
                 
                 self._model = load_model(
-                    'models/facenet_real_fake_classifier_final.keras',
+                    model_path,
                     custom_objects=custom_objects
                 )
                 
