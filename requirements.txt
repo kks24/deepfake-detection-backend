@@ -10,6 +10,3 @@ pytest>=7.4.0
 opencv-python-headless==4.8.0.74  # Using headless version for server deployment
 mtcnn==0.1.1
 boto3==1.28.44
-pytest==8.0.0
-pytest-cov==4.1.0
-pytest-mock==3.12.0
