@@ -23,23 +23,48 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov
     
-    - name: Run tests
-      env:
-        R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-        R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
-        R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-        R2_MODEL_KEY: ${{ secrets.R2_MODEL_KEY }}
+    - name: Download model from R2
+      run: |
+        pip install boto3
+        python - <<EOF
+        import boto3
+        import os
+        from botocore.config import Config
+
+        # Create R2 client
+        s3_client = boto3.client(
+            's3',
+            endpoint_url='${{ secrets.R2_ENDPOINT_URL }}',
+            aws_access_key_id='${{ secrets.R2_ACCESS_KEY_ID }}',
+            aws_secret_access_key='${{ secrets.R2_SECRET_ACCESS_KEY }}',
+            config=Config(retries={'max_attempts': 3})
+        )
+
+        # Create models directory
+        os.makedirs('models', exist_ok=True)
+
+        # Download model
+        print("Downloading model from R2...")
+        s3_client.download_file(
+            '${{ secrets.R2_BUCKET_NAME }}',
+            '${{ secrets.R2_MODEL_KEY }}',
+            'models/facenet_real_fake_classifier_final.keras'
+        )
+        print("Model downloaded successfully")
+        EOF
+        
+    - name: Run tests with coverage
       run: |
         pytest --cov=app tests/ --cov-report=xml
-    
+        
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
-        
+
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -70,18 +95,8 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2  # Add this to get access to your repository files
+    - uses: actions/checkout@v2
     
-    - name: Copy model files to server
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        source: "models/*"
-        target: "~/deepfake-detection/"
-        strip_components: 0
-
     - name: Deploy to server
       uses: appleboy/ssh-action@master
       with:
@@ -113,12 +128,33 @@ jobs:
                 - R2_ENDPOINT_URL=${{ secrets.R2_ENDPOINT_URL }}
                 - R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}
                 - R2_MODEL_KEY=${{ secrets.R2_MODEL_KEY }}
-              working_dir: /app
               restart: unless-stopped
           EOL
 
-          echo "Creating logs directory..."
+          echo "Creating required directories..."
           mkdir -p logs
+
+          echo "Downloading model from R2..."
+          python3 - <<EOF
+          import boto3
+          import os
+          from botocore.config import Config
+
+          s3_client = boto3.client(
+              's3',
+              endpoint_url='${{ secrets.R2_ENDPOINT_URL }}',
+              aws_access_key_id='${{ secrets.R2_ACCESS_KEY_ID }}',
+              aws_secret_access_key='${{ secrets.R2_SECRET_ACCESS_KEY }}',
+              config=Config(retries={'max_attempts': 3})
+          )
+
+          os.makedirs('models', exist_ok=True)
+          s3_client.download_file(
+              '${{ secrets.R2_BUCKET_NAME }}',
+              '${{ secrets.R2_MODEL_KEY }}',
+              'models/facenet_real_fake_classifier_final.keras'
+          )
+          EOF
 
           echo "Pulling and starting services..."
           docker compose pull
