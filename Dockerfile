@@ -17,8 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY app app/
-COPY wsgi.py .
+COPY . .
 
 # Create necessary directories
 RUN mkdir -p logs
@@ -26,11 +25,11 @@ RUN mkdir -p logs
 # Set environment variables
 ENV FLASK_APP=app/__init__.py
 ENV FLASK_ENV=production
-ENV MODEL_PATH=/app/models/facenet_real_fake_classifier_final.keras
+ENV MODEL_PATH=models/facenet_real_fake_classifier_final.keras
 
 # Expose the port
 EXPOSE 5000
 
 # Command to run the application
-CMD ["gunicorn", "wsgi:app", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4"]
+CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
 
