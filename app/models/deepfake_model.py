@@ -39,9 +39,14 @@ class DeepfakeDetector:
         self.ensure_model_downloaded()
     
     def ensure_model_downloaded(self):
-        """Ensure model is downloaded from R2"""
-        if not os.path.exists('models/facenet_real_fake_classifier_final.keras'):
-            self.r2_storage.download_model()
+        """Ensure model is downloaded correctly from R2"""
+        try:
+            model_path = self.r2_storage.download_model()
+            self.logger.info(f"Model ready at: {model_path}")
+            return model_path
+        except Exception as e:
+            self.logger.error(f"Failed to get model: {str(e)}")
+            raise
     
     def configure_tensorflow(self):
         try:
