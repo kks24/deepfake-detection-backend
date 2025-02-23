@@ -18,7 +18,6 @@ This is the backend service for the Deepfake Detection system, built using Flask
 - TensorFlow
 - Docker
 - GitHub Actions for CI/CD
-- Gunicorn for WSGI server
 
 ## API Endpoints
 
@@ -39,7 +38,7 @@ API documentation is available via Swagger UI at `/api/v1/docs` when the service
 
 - Python 3.11+
 - Docker and Docker Compose
-- Model file (facenet_real_fake_classifier_2Stage_2.h5)
+- Model file (facenet_real_fake_classifier_final.keras)
 
 ### Local Development Setup
 
