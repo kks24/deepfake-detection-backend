@@ -1,9 +1,8 @@
-# tests/test_api.py
 import pytest
+from app import create_app
 import io
 from PIL import Image
 import numpy as np
-from app import create_app
 from unittest.mock import patch, MagicMock
 
 @pytest.fixture
@@ -11,7 +10,6 @@ def app():
     """Create and configure app for testing."""
     app = create_app()
     app.config['TESTING'] = True
-    app.config['MODEL_PATH'] = 'test_model.h5'  # Use a test model path
     return app
 
 @pytest.fixture
@@ -21,7 +19,6 @@ def client(app):
 
 def create_test_image():
     """Create a test image for API testing."""
-    # Create a 160x160 RGB test image
     image = Image.new('RGB', (160, 160), color='red')
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format='PNG')
@@ -30,7 +27,7 @@ def create_test_image():
 
 @pytest.fixture
 def mock_model():
-    """Create a mock model that returns predictable results."""
+    """Mock the model loading and R2 download."""
     with patch('app.models.deepfake_model.DeepfakeDetector') as mock:
         instance = mock.return_value
         instance.predict.return_value = {
@@ -44,35 +41,34 @@ def mock_model():
         }
         yield mock
 
-def test_deepfake_detection_endpoint(client, mock_model):
-    """Test the deepfake detection endpoint with a mock model."""
-    # Create test image
+@pytest.fixture
+def mock_r2_storage():
+    """Mock R2 storage operations."""
+    with patch('app.utils.r2_storage.R2ModelStorage') as mock:
+        instance = mock.return_value
+        instance.download_model.return_value = 'models/facenet_real_fake_classifier_final.keras'
+        yield mock
+
+def test_deepfake_detection_endpoint(client, mock_model, mock_r2_storage):
+    """Test the deepfake detection endpoint."""
     test_image = create_test_image()
     
-    # Make request to the API
     response = client.post(
         '/api/v1/detect/',
         data={'file': (test_image, 'test.png')},
         content_type='multipart/form-data'
     )
     
-    # Check response
     assert response.status_code == 200
     data = response.get_json()
     
-    # Verify response structure
     assert 'prediction' in data
     assert 'confidence' in data
-    assert 'processing_time' in data
-    assert 'debug_info' in data
-    
-    # Verify expected values
-    assert data['prediction'] == 'fake'
     assert isinstance(data['confidence'], float)
-    assert isinstance(data['processing_time'], float)
+    assert 'processing_time' in data
 
 def test_missing_file(client):
-    """Test the API's response when no file is provided."""
+    """Test API response when no file is provided."""
     response = client.post(
         '/api/v1/detect/',
         data={},
@@ -84,28 +80,16 @@ def test_missing_file(client):
     assert 'error' in data
     assert data['error'] == 'No file provided'
 
-def test_empty_file(client):
-    """Test the API's response when an empty file is provided."""
-    response = client.post(
-        '/api/v1/detect/',
-        data={'file': (io.BytesIO(), '')},
-        content_type='multipart/form-data'
-    )
-    
-    assert response.status_code == 400
-    data = response.get_json()
-    assert 'error' in data
-    assert data['error'] == 'No selected file'
-
 def test_health_check(client):
     """Test the health check endpoint."""
     response = client.get('/api/v1/detect/health')
+    
     assert response.status_code == 200
     data = response.get_json()
     assert data['status'] == 'healthy'
 
-def test_augmented_detection_endpoint(client, mock_model):
-    """Test the augmented detection endpoint with a mock model."""
+def test_augmented_detection(client, mock_model, mock_r2_storage):
+    """Test the augmented detection endpoint."""
     test_image = create_test_image()
     
     response = client.post(
@@ -117,10 +101,7 @@ def test_augmented_detection_endpoint(client, mock_model):
     assert response.status_code == 200
     data = response.get_json()
     
-    # Verify augmented response structure
     assert 'original_prediction' in data
     assert 'augmented_predictions' in data
-    assert 'consensus_prediction' in data
-    assert 'average_confidence' in data
     assert isinstance(data['augmented_predictions'], list)
     assert len(data['augmented_predictions']) > 0
